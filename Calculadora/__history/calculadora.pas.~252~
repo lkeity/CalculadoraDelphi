@@ -1,0 +1,441 @@
+unit calculadora;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Buttons, Vcl.StdCtrls;
+
+type
+  TTCalculadora = class(TForm)
+    btn0: TSpeedButton;
+    btn1: TSpeedButton;
+    btn2: TSpeedButton;
+    btn3: TSpeedButton;
+    btn4: TSpeedButton;
+    btn5: TSpeedButton;
+    btn6: TSpeedButton;
+    btn7: TSpeedButton;
+    btn8: TSpeedButton;
+    btn9: TSpeedButton;
+    btnsinal: TSpeedButton;
+    btnvirgula: TSpeedButton;
+    btndivisao: TSpeedButton;
+    btnsubtracao: TSpeedButton;
+    btnmultiplicacao: TSpeedButton;
+    btnadicao: TSpeedButton;
+    btnsqrt: TSpeedButton;
+    btnfracao: TSpeedButton;
+    btnporcentagem: TSpeedButton;
+    btnigual: TSpeedButton;
+    btnc: TSpeedButton;
+    btnce: TSpeedButton;
+    btnbackspace: TSpeedButton;
+    tcalculo: TEdit;
+    tresultado: TEdit;
+    procedure btn0Click(Sender: TObject);
+    procedure btndivisaoClick(Sender: TObject);
+    procedure btnigualClick(Sender: TObject);
+    procedure btnvirgulaClick(Sender: TObject);
+    procedure btnsinalClick(Sender: TObject);
+    procedure btnporcentagemClick(Sender: TObject);
+    procedure btnfracaoClick(Sender: TObject);
+    procedure btnbackspaceClick(Sender: TObject);
+    procedure btnadicaoClick(Sender: TObject);
+    procedure btnsubtracaoClick(Sender: TObject);
+    procedure btnmultiplicacaoClick(Sender: TObject);
+    procedure btncClick(Sender: TObject);
+    procedure FormKeyPress(Sender: TObject; var Key: Char);
+    procedure btnceClick(Sender: TObject);
+    procedure btnsqrtClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+
+  private
+    num1, num2, resultado: real;
+    aux1: string;
+    achoures, achouraiz: boolean;
+    visorResultado: string;
+    op, opa: string;
+    contador: integer;
+    virgula, sinal: string;
+
+    procedure RealizaOperacaoPendente;
+  public
+    { Public declarations }
+  end;
+
+var
+  TCalculadora: TTCalculadora;
+
+implementation
+
+{$R *.dfm}
+
+// Pegar a informação dos números digitados ou clicados.
+procedure TTCalculadora.btn0Click(Sender: TObject);
+begin
+//Verifica se foi '='. Se houve, limpa a informação na tela.
+  if achoures then
+    begin
+      tresultado.Clear;
+      tcalculo.Clear;
+    end;
+  tresultado.Text := tresultado.Text + TSpeedButton(Sender).Caption;
+  achoures := false;
+end;
+
+//Adição.
+procedure TTCalculadora.btnadicaoClick(Sender: TObject);
+begin
+  visorResultado := tresultado.Text;
+// Se tem informação na tela, valida.
+   if (visorResultado <> '') then
+      RealizaOperacaoPendente;
+   op := '+';
+   achoures := false;
+end;
+
+//Divisão.
+procedure TTCalculadora.btndivisaoClick(Sender: TObject);
+begin
+  visorResultado := tresultado.Text;
+   if (visorResultado <> '') then
+      RealizaOperacaoPendente;
+   op := '/';
+   achoures := false;
+end;
+
+//Resultado.
+procedure TTCalculadora.btnigualClick(Sender: TObject);
+begin
+
+// Se clicou em mais de um '=', verifica se há possibilidade de calcular a mesma coisa de novo.
+  if achoures then
+// executar a operação
+    begin
+// Se tem operação. Caso não tenha, ele apagará a tela no próximo '='
+      if opa <> '' then
+        begin
+// Concatena os dados e joga na tela provisória.
+          tcalculo.Text := FloatToStr(num1) + ' ' + opa + ' ' + FloatToStr(num2);
+
+          case opa[1] of
+            '+': resultado := num1 + num2;
+            '-': resultado := num1 - num2;
+            '*': resultado := num1 * num2;
+            '/':
+              begin
+                if (num1 <> 0) and (num2 <> 0) then
+                  begin
+                    resultado := num1 / num2;
+                  end
+                else
+                  begin
+                    num1:= 0;
+                    num2:= 0;
+                    resultado:= 0;
+                  end;
+              end;
+          end;
+          tcalculo.Text := FloatToStr(num1) + ' ' + opa + ' ' + FloatToStr(num2);
+          num1 := resultado;
+        end
+      else
+        tcalculo.Clear;
+    end
+  else
+// Se foi só uma vez, verifica se há operação pendente.
+    begin
+      RealizaOperacaoPendente;
+    end;
+  tresultado.Text := FloatToStr(num1);
+  achoures := true;
+end;
+
+//Multiplicação.
+procedure TTCalculadora.btnmultiplicacaoClick(Sender: TObject);
+begin
+  visorResultado := tresultado.Text;
+   if visorResultado <> '' then
+      RealizaOperacaoPendente;
+   op := '*';
+   achoures := false;
+end;
+
+//Vírgula.
+procedure TTCalculadora.btnvirgulaClick(Sender: TObject);
+begin
+
+  visorResultado := tresultado.Text;
+
+//Verifica se está sendo iniciado um novo cálculo.
+  if not achoures then
+    begin
+      if visorResultado = '' then
+        begin
+          tresultado.Text := '0,';
+          virgula := ',';
+        end
+      else
+        begin
+          virgula := copy (visorResultado, pos (',', visorResultado) +0,1);
+        end;
+
+      if (virgula <> ',') then
+        tresultado.Text := tresultado.Text + ',';
+    end
+  else
+    tresultado.Text := '0,';
+    achoures := false;
+end;
+
+//Ao pressionar a tecla do teclado.
+procedure TTCalculadora.FormCreate(Sender: TObject);
+begin
+  num1 := 0;
+  op := '';
+  tresultado.Text := 0;
+end;
+
+procedure TTCalculadora.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  case (Key) of
+    VK_DELETE: btnceClick(Sender);
+    VK_ESCAPE: btncClick(Sender);
+  end;
+end;
+
+procedure TTCalculadora.FormKeyPress(Sender: TObject; var Key: Char);
+begin
+
+  case (Key) of
+
+    '0': btn0Click(btn0);
+    '1': btn0Click(btn1);
+    '2': btn0Click(btn2);
+    '3': btn0Click(btn3);
+    '4': btn0Click(btn4);
+    '5': btn0Click(btn5);
+    '6': btn0Click(btn6);
+    '7': btn0Click(btn7);
+    '8': btn0Click(btn8);
+    '9': btn0Click(btn9);
+    '+': btnadicaoClick(Sender);
+    '-': btnsubtracaoClick(Sender);
+    '*': btnmultiplicacaoClick(Sender);
+    '/': btndivisaoClick(Sender);
+    '=': btnigualClick(Sender);
+    '%': btnporcentagemClick(Sender);
+    ',': btnvirgulaClick(Sender);
+    #13: btnigualClick(Sender);
+    #46: btnceClick(Sender);
+     #8: btnbackspaceClick(Sender);
+  end;
+end;
+
+//Sinal.
+procedure TTCalculadora.btnsinalClick(Sender: TObject);
+var
+  contsinal: integer;
+begin
+
+  visorResultado := tresultado.Text;
+  contsinal := visorResultado.Length;
+
+  sinal := copy (tresultado.Text, 1, 1);
+
+// Se tem informação na tela, troca o sinal.
+  if visorResultado <> '' then
+    begin
+      if sinal = '-' then
+        begin
+          tresultado.Text := copy(visorResultado, 2, contsinal);
+        end
+      else
+        begin
+          tresultado.Text := '-' + tresultado.Text;
+        end;
+    end;
+
+end;
+
+procedure TTCalculadora.btnsqrtClick(Sender: TObject);
+begin
+
+  visorResultado := tresultado.Text;
+// Se tem informação na tela, faz o cálculo da raiz quadrada.
+  if visorResultado <> '' then
+    begin
+// Se foi a primeira ou segunda vez que tecla o botão de raiz quadrada.
+      if not achouraiz then
+        begin
+          num1 := StrToFloat(visorResultado);
+          resultado := num1 * num1;
+          tresultado.Text := FloatToStr(resultado);
+        end
+      else
+        begin
+          resultado := resultado * resultado;
+          tresultado.Text := FloatToStr(resultado);
+        end;
+    end;
+
+  tcalculo.Text := '';
+  achouraiz := true;
+end;
+
+//Subtração.
+procedure TTCalculadora.btnsubtracaoClick(Sender: TObject);
+begin
+  visorResultado := tresultado.Text;
+   if visorResultado <> '' then
+      RealizaOperacaoPendente;
+   op := '-';
+   achoures := false;
+end;
+
+//Porcentagem.
+procedure TTCalculadora.btnporcentagemClick(Sender: TObject);
+begin
+
+  visorResultado := tresultado.Text;
+// Verifica se na tela foi solicitado a porcentagem antes ou depois da operação.
+      if op = '' then
+        begin
+          tresultado.Text := '0';
+        end
+      else
+        begin
+          if (num1 <> 0)  then
+            begin
+             if visorResultado <> '' then
+              begin
+                num2 := StrToFloat(visorResultado);
+                resultado := num1 * num2 /100;
+                tresultado.Text := FloatToStr(resultado);
+                tcalculo.Text := FloatToStr(num1) + op + FloatToStr(num2) + '%';
+                num2 := resultado;
+              end;
+            end;
+        end;
+end;
+
+//Fração.
+procedure TTCalculadora.btnfracaoClick(Sender: TObject);
+begin
+
+  visorResultado := tresultado.Text;
+// Verifica se tem algo na tela e se for diferente de zeros.
+  if visorResultado <> '' then
+    begin
+      if visorResultado <> '0' then
+        begin
+          num1 := 1 / StrToFloat(visorResultado);
+          tresultado.Text := FloatToStr(num1);
+          tcalculo.Text := '1 / ' + visorResultado;
+        end;
+    end;
+
+end;
+
+//Backspace.
+procedure TTCalculadora.btnbackspaceClick(Sender: TObject);
+begin
+
+  if not achoures then
+    begin
+      contador := Length(tresultado.Text);
+      tresultado.Text := copy (tresultado.Text, 1, contador -1);
+    end
+  else
+    tresultado.Clear;
+end;
+
+//Limpa tudo.
+procedure TTCalculadora.btncClick(Sender: TObject);
+begin
+  tresultado.Clear;
+  tcalculo.Clear;
+  num1 := 0;
+  num2 := 0;
+  resultado := 0;
+  op := '';
+  opa := '';
+
+end;
+
+//Limpa resultado.
+procedure TTCalculadora.btnceClick(Sender: TObject);
+begin
+  tresultado.Clear;
+end;
+
+//Função para saber qual número deve ser preenchido.
+procedure TTCalculadora.RealizaOperacaoPendente;
+begin
+
+  if (aux1 <> '') and (op <> '') and (tresultado.Text <> '') then
+    begin
+  //Verifica se a pessoa não apertou duas vezes as operações.
+      if tresultado.Text <> '' then
+        begin
+          tcalculo.Text := Format('%s %s %s', [
+            FormatFloat('0.#######', num1),
+            op,
+            tresultado.Text
+          ]);
+
+          num2 := StrToFloat(tresultado.Text);
+
+          // executar a operação
+          case op[1] of
+            '+': num1 := num1 + num2;
+            '-':
+              begin
+                num1 := num1 - num2;
+              end;
+            '*': num1 := num1 * num2;
+            '/':
+              begin
+                if (num1 <> 0) and (num2 <> 0) then
+                  begin
+                    num1 := num1 / num2;
+                  end
+                else
+                  begin
+                    num1:= 0;
+                    num2:= 0;
+                  end;
+              end;
+          end;
+
+          if (op = '/') and (num1 = 0) then
+            begin
+              tcalculo.Text := 'Não é possível dividir por zero';
+              tresultado.Text := '';
+              op := '';
+              num1 := 0;
+              num2 := 0;
+            end
+          else
+//            tcalculo.Text := tcalculo.Text + Format(' = %s', [
+//              FormatFloat('0.######', num1)
+//            ]);
+        end;
+    end
+  else
+//Se tem algo na tela e não foi digitado operação ainda.
+    if tresultado.Text <> '' then
+      begin
+        num1 := StrToFloat(tresultado.Text);
+      end;
+
+  aux1 := FloatToStr(num1);
+  opa := op;
+  op := '';
+  tresultado.Clear;
+end;
+
+end.
